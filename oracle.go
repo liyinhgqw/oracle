@@ -25,7 +25,7 @@ func NewOracle() *Oracle {
 	if err != nil {
 		log.Fatalln("Cannot open log file")
 	}
-	return &Oracle{-1, 0, 100, ":7070", 0, bk}
+	return &Oracle{-1, 0, 10000, ":7070", 0, bk}
 }
 
 func (o *Oracle) WaitForClientConnections() {

@@ -13,9 +13,9 @@ func main() {
 	var count int64 = 0
 	t := time.Now().UnixNano()
 
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 100000; i++ {
 		go func(i int) {
-			for j := 0; j < 100000; j++ {
+			for j := 0; j < 1000000; j++ {
 				if ts, err := client.TS(); err != nil {
 					log.Fatalln("ts error")
 				} else {
@@ -34,9 +34,6 @@ func main() {
 		}(i)
 	}
 
-	time.Sleep(100 * time.Second)
+	time.Sleep(10 * time.Second)
 	client.Close()
-	// for i := 0; i < 10; i++ {
-	// 	f[i].Close()
-	// }
 }
