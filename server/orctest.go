@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	arr := make([]bool, 1000000)
+	arr := make([]bool, 10000000)
 	client, _ := oracle.NewClient(":7070")
 	var count int64 = 0
 	t := time.Now().UnixNano()
@@ -24,7 +24,7 @@ func main() {
 					}
 					arr[ts] = true
 					atomic.AddInt64(&count, 1)
-					if atomic.LoadInt64(&count)%1000 == 0 {
+					if atomic.LoadInt64(&count)%10000 == 0 {
 						eps := time.Now().UnixNano() - t
 						qps := atomic.LoadInt64(&count) * int64(time.Second) / eps
 						log.Println("qps = ", qps)
@@ -35,5 +35,5 @@ func main() {
 	}
 
 	time.Sleep(10 * time.Second)
-	client.Close()
+	// client.Close()
 }

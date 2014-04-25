@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
-	"sync/atomic"
+	"sync"
 )
 
 type Oracle struct {
@@ -16,7 +16,8 @@ type Oracle struct {
 	remain    int32
 	batchsize int32
 	addrport  string
-	shutdown  int32
+	shutdown  bool
+	mutex     sync.Mutex
 	bookeeper *os.File
 }
 
@@ -25,7 +26,14 @@ func NewOracle() *Oracle {
 	if err != nil {
 		log.Fatalln("Cannot open log file")
 	}
-	return &Oracle{-1, 0, 10000, ":7070", 0, bk}
+	return &Oracle{
+		maxTs:     -1,
+		remain:    0,
+		batchsize: 10000,
+		addrport:  ":7070",
+		shutdown:  false,
+		bookeeper: bk,
+	}
 }
 
 func (o *Oracle) WaitForClientConnections() {
@@ -34,7 +42,7 @@ func (o *Oracle) WaitForClientConnections() {
 		log.Panicln("Listen error", err)
 	}
 	defer listener.Close()
-	for atomic.LoadInt32(&o.shutdown) == 0 {
+	for !o.shutdown {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Println("Accept error", err)
@@ -45,7 +53,7 @@ func (o *Oracle) WaitForClientConnections() {
 }
 
 func (o *Oracle) Close() {
-	atomic.CompareAndSwapInt32(&o.shutdown, 0, 1)
+	o.shutdown = true
 }
 
 func (o *Oracle) ServeConn(conn net.Conn) {
@@ -74,6 +82,9 @@ func (o *Oracle) ServeConn(conn net.Conn) {
 }
 
 func (o *Oracle) getTimestamp(getTs *GetTS) *ReplyTS {
+	o.mutex.Lock()
+	defer o.mutex.Unlock()
+
 	if getTs.Num > o.remain {
 		batch := o.batchsize
 		if batch < getTs.Num {
