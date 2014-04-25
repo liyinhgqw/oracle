@@ -6,6 +6,11 @@ import (
 )
 
 func main() {
-	client := &oracle.Client{":7070"}
-	fmt.Println(client.GetTS(5))
+	client := oracle.NewClient(":7070")
+	if ts, err := client.TS(); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(ts)
+	}
+
 }

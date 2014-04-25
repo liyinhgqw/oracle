@@ -5,10 +5,10 @@ import (
 	"encoding/binary"
 	"hash/crc32"
 	"io"
-	"os"
-	// "io"
 	"log"
 	"net"
+	"os"
+	"sync/atomic"
 )
 
 type Oracle struct {
@@ -16,7 +16,7 @@ type Oracle struct {
 	remain    int32
 	batchsize int32
 	addrport  string
-	shutdown  bool
+	shutdown  int32
 	bookeeper *os.File
 }
 
@@ -25,7 +25,7 @@ func NewOracle() *Oracle {
 	if err != nil {
 		log.Fatalln("Cannot open log file")
 	}
-	return &Oracle{-1, 0, 100, ":7070", false, bk}
+	return &Oracle{-1, 0, 100, ":7070", 0, bk}
 }
 
 func (o *Oracle) WaitForClientConnections() {
@@ -33,32 +33,43 @@ func (o *Oracle) WaitForClientConnections() {
 	if err != nil {
 		log.Panicln("Listen error", err)
 	}
-	for !o.shutdown {
+	defer listener.Close()
+	for atomic.LoadInt32(&o.shutdown) == 0 {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Println("Accept error", err)
 			continue
 		}
-		reader := bufio.NewReader(conn)
-		writer := bufio.NewWriter(conn)
+		go o.ServeConn(conn)
+	}
+}
+
+func (o *Oracle) Close() {
+	atomic.CompareAndSwapInt32(&o.shutdown, 0, 1)
+}
+
+func (o *Oracle) ServeConn(conn net.Conn) {
+	defer conn.Close()
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
+	for {
 		msgType, err := reader.ReadByte()
 		if err != nil {
-			log.Fatalln("msg type read failed")
+			return
 		}
 		switch uint8(msgType) {
 		case GETTS:
 			getts := new(GetTS)
 			if err := getts.Unmarshal(reader); err != nil {
-				log.Fatalln("GetTs read failed")
+				return
 			}
 			replyts := o.getTimestamp(getts)
 			writer.WriteByte(byte(REPLYTS))
 			replyts.Marshal(writer)
 			writer.Flush()
 		default:
-			log.Fatalln("Unknown msg type")
+			return
 		}
-		conn.Close()
 	}
 }
 
@@ -119,7 +130,7 @@ func (o *Oracle) Recover() {
 }
 
 func (o *Oracle) log(ts int64) {
-	log.Println("log...", ts)
+	// log.Println("log...", ts)
 	var b [12]byte
 	bs := b[4:12]
 	cs := b[:4]
