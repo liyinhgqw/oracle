@@ -11,6 +11,7 @@ import (
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var address = flag.String("address", ":7070", "adress:port")
 
 func main() {
 	flag.Parse()
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	log.Println("Timestamp Oracle Started")
-	orc := oracle.NewOracle()
+	orc := oracle.NewOracle(*address)
 	orc.Recover()
 	orc.WaitForClientConnections()
 }

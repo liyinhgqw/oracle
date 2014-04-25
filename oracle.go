@@ -21,7 +21,7 @@ type Oracle struct {
 	bookeeper *os.File
 }
 
-func NewOracle() *Oracle {
+func NewOracle(address string) *Oracle {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	bk, err := os.OpenFile("orc.log", os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
@@ -31,7 +31,7 @@ func NewOracle() *Oracle {
 		maxTs:     -1,
 		remain:    0,
 		batchsize: 10000,
-		addrport:  ":7070",
+		addrport:  address,
 		shutdown:  false,
 		bookeeper: bk,
 	}

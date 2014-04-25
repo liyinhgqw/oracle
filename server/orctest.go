@@ -8,8 +8,11 @@ import (
 )
 
 func main() {
-	arr := make([]bool, 10000000)
-	client, _ := oracle.NewClient(":7070")
+	arr := make([]bool, 100000000)
+	client, err := oracle.NewClient(":7080")
+	if err != nil {
+		log.Fatalln(err)
+	}
 	var count int64 = 0
 	t := time.Now().UnixNano()
 
@@ -35,5 +38,5 @@ func main() {
 	}
 
 	time.Sleep(10 * time.Second)
-	// client.Close()
+	client.Close()
 }
