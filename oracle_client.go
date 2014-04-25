@@ -17,6 +17,7 @@ type Client struct {
 }
 
 func NewClient(address string) (*Client, error) {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	conn_, err := net.Dial("tcp", address)
 	if err != nil {
 		return nil, err

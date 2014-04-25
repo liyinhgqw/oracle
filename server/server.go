@@ -15,6 +15,7 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 func main() {
 	flag.Parse()
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)

@@ -22,6 +22,7 @@ type Oracle struct {
 }
 
 func NewOracle() *Oracle {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	bk, err := os.OpenFile("orc.log", os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatalln("Cannot open log file")
